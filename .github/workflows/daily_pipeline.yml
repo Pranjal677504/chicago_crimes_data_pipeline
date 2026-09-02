@@ -1,0 +1,41 @@
+name: Daily Chicago Crimes Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 01:30 UTC = 07:00 IST
+    - cron: "30 1 * * *"
+
+concurrency:
+  group: chicago-crimes-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run incremental pipeline
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          MOTHERDUCK_DATABASE: chicago_crimes_2020_to_2026
+          CHICAGO_APP_TOKEN: ${{ secrets.CHICAGO_APP_TOKEN }}
+          PIPELINE_START_YEAR: "2020"
+          OVERLAP_HOURS: "24"
+        run: python src/pipeline.py
