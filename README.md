@@ -6,7 +6,7 @@
 
 An end-to-end data engineering project that incrementally ingests Chicago crime records, models them through a Bronze–Silver–Gold architecture in MotherDuck, validates every layer with automated quality gates, records operational history, and publishes a refreshed analytics dashboard.
 
-![Chicago Crime Analytics dashboard overview](docs/assets/dashboard-overview.png)
+![Chicago Crime Analytics dashboard overview](docs/assets/dashboard-overview.jpg)
 
 ## At a glance
 
