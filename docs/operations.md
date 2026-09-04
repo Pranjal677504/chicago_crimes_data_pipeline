@@ -33,6 +33,16 @@ One-time setup: in **Settings → Pages**, choose **GitHub Actions** as the buil
 
 If dashboard deployment fails, rerun **Daily Chicago Crimes Pipeline** from the Actions tab after correcting the reported issue. The previously deployed dashboard remains available until a new deployment succeeds.
 
+### Local dashboard validation
+
+Use the project Parquet exports to validate the aggregate dashboard build without querying MotherDuck:
+
+```bash
+python src/build_dashboard.py \
+  --parquet-dir /path/to/parquet/files \
+  --output /tmp/chicago-dashboard/data
+```
+
 ## Verification query
 
 ```sql
