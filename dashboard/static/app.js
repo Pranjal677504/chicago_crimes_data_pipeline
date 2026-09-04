@@ -6,6 +6,7 @@
   const fmt = new Intl.NumberFormat('en-US');
   const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const colors = ['#156b78', '#2f8993', '#6e9ba2', '#9db9bd', '#c7d7da', '#d8912e'];
 
@@ -25,6 +26,18 @@
   function periodKey(year, month) { return `${year}-${String(month).padStart(2, '0')}`; }
   function inPeriod(year, month) { const key = periodKey(year, month); return key >= state.from && key <= state.to; }
   function periodLabel(value) { const [year, month] = value.split('-'); return `${months[+month - 1]} ${year}`; }
+  function periodLongLabel(value) { const [year, month] = value.split('-'); return `${monthNames[+month - 1]} ${year}`; }
+  function periodRange(min, max) {
+    const values = [];
+    let [year, month] = min.split('-').map(Number);
+    const [endYear, endMonth] = max.split('-').map(Number);
+    while (year < endYear || (year === endYear && month <= endMonth)) {
+      values.push(periodKey(year, month));
+      month += 1;
+      if (month === 13) { year += 1; month = 1; }
+    }
+    return values;
+  }
   function isPartialYear(year) { return year === Math.max(...data.core.years) && new Date(data.core.meta.maxDate).getMonth() < 11; }
   function showToast(message) { const el = $('#toast'); el.textContent = message; el.classList.add('show'); clearTimeout(showToast.t); showToast.t = setTimeout(() => el.classList.remove('show'), 2400); }
   function showTip(event, title, lines = []) { const el = $('#tooltip'); el.innerHTML = `<strong>${esc(title)}</strong>${lines.map(x => `<div>${x}</div>`).join('')}`; el.classList.add('show'); moveTip(event); }
@@ -94,8 +107,9 @@
     fillSelect('#districtFilter', data.core.districts, v => v === 'UNASSIGNED' ? 'Unassigned' : `District ${v}`);
     fillSelect('#communityFilter', data.core.communities, v => `Area ${v}`);
     const controls = { year: '#yearFilter', crime: '#crimeFilter', district: '#districtFilter', community: '#communityFilter', domestic: '#domesticFilter', arrest: '#arrestFilter' };
-    $('#dateFrom').min = state.minPeriod; $('#dateFrom').max = state.maxPeriod; $('#dateFrom').value = state.from;
-    $('#dateTo').min = state.minPeriod; $('#dateTo').max = state.maxPeriod; $('#dateTo').value = state.to;
+    const periods = periodRange(state.minPeriod, state.maxPeriod);
+    fillSelect('#dateFrom', periods, periodLongLabel); fillSelect('#dateTo', periods, periodLongLabel);
+    $('#dateFrom').value = state.from; $('#dateTo').value = state.to;
     Object.entries(controls).forEach(([key, id]) => {
       $(id).value = state[key];
       $(id).addEventListener('change', e => {
