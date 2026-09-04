@@ -1,6 +1,10 @@
 # Chicago Crimes Data Pipeline
 
-An end-to-end data engineering project that incrementally ingests Chicago crime records, models them in a Bronze–Silver–Gold architecture in MotherDuck, validates every layer with automated quality gates, and records operational run history.
+[![Daily pipeline](https://github.com/Pranjal677504/chicago_crimes_data_pipeline/actions/workflows/daily_pipeline.yml/badge.svg)](https://github.com/Pranjal677504/chicago_crimes_data_pipeline/actions/workflows/daily_pipeline.yml)
+
+[Open the interactive dashboard](https://pranjal677504.github.io/chicago_crimes_data_pipeline/)
+
+An end-to-end data engineering project that incrementally ingests Chicago crime records, models them in a Bronze–Silver–Gold architecture in MotherDuck, validates every layer with automated quality gates, records operational run history, and publishes an interactive analytics dashboard.
 
 ## Architecture
 
@@ -13,6 +17,8 @@ flowchart TD
     E --> F[Five Gold analytics tables]
     F --> G[Gold quality gate]
     G --> H[Pipeline run history]
+    G --> I[Dashboard data build]
+    I --> J[GitHub Pages]
 ```
 
 ## Technology
@@ -21,6 +27,7 @@ flowchart TD
 - SQL for transformations and quality gates
 - DuckDB and MotherDuck for analytical storage and execution
 - GitHub Actions for daily scheduling
+- GitHub Pages for the automatically refreshed dashboard
 - Chicago Data Portal SODA API as the source
 
 ## Data model
@@ -46,7 +53,13 @@ Every run receives a UUID and batch ID. Success and failure metrics are written 
 ```text
 .
 ├── .github/workflows/daily_pipeline.yml
-├── src/pipeline.py
+├── dashboard/static/
+│   ├── index.html
+│   ├── styles.css
+│   └── app.js
+├── src/
+│   ├── pipeline.py
+│   └── build_dashboard.py
 ├── docs/
 │   ├── architecture.md
 │   ├── data_dictionary.md
@@ -97,6 +110,18 @@ Never commit `.env` or a MotherDuck token.
 Add `MOTHERDUCK_TOKEN` under **Settings → Secrets and variables → Actions**. `CHICAGO_APP_TOKEN` is optional but recommended for steadier API limits. Run the workflow manually once before relying on the daily schedule.
 
 The schedule is `01:30 UTC`, equivalent to `07:00 IST`. Scheduled GitHub Actions may start a few minutes late during periods of high demand.
+
+## Automated dashboard
+
+After the incremental load and all quality gates pass, the same workflow builds a static dashboard directly from the validated MotherDuck tables and deploys it to GitHub Pages. A failed pipeline or reconciliation check prevents publication, so the live dashboard remains on the last verified version.
+
+Enable **Settings → Pages → Build and deployment → GitHub Actions** once for the repository. No data files are committed: the workflow creates an ephemeral Pages artifact, which avoids repository bloat while keeping `MOTHERDUCK_TOKEN` in Actions secrets.
+
+To validate the dashboard build locally with the project Parquet exports:
+
+```bash
+python src/build_dashboard.py --parquet-dir /path/to/parquet/files --output /tmp/chicago-dashboard/data
+```
 
 ## Quality controls
 
