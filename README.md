@@ -113,7 +113,7 @@ The schedule is `01:30 UTC`, equivalent to `07:00 IST`. Scheduled GitHub Actions
 
 ## Automated dashboard
 
-After the incremental load and all quality gates pass, the same workflow builds a static dashboard directly from the validated MotherDuck tables and deploys it to GitHub Pages. A failed pipeline or reconciliation check prevents publication, so the live dashboard remains on the last verified version.
+After the incremental load and all quality gates pass, the same workflow builds a static dashboard directly from the validated MotherDuck tables and deploys it to GitHub Pages. A failed pipeline or reconciliation check prevents publication, so the live dashboard remains on the last verified version. The public artifact contains aggregate analytics only; no incident-level rows are published.
 
 Enable **Settings → Pages → Build and deployment → GitHub Actions** once for the repository. No data files are committed: the workflow creates an ephemeral Pages artifact, which avoids repository bloat while keeping `MOTHERDUCK_TOKEN` in Actions secrets.
 
