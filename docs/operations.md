@@ -25,6 +25,14 @@ Never commit actual secret values. GitHub secrets should contain the production 
 
 The workflow uses `30 1 * * *`, which means 01:30 UTC or 07:00 IST. GitHub may start scheduled jobs a few minutes late.
 
+## Dashboard publication
+
+The daily workflow publishes the dashboard only after the incremental pipeline and Gold quality checks succeed. The dashboard builder performs an additional reconciliation between Silver, monthly Gold, and area Gold totals before creating the deployment artifact.
+
+One-time setup: in **Settings → Pages**, choose **GitHub Actions** as the build and deployment source. The workflow uses the repository's `GITHUB_TOKEN`; no additional deployment secret is required. The existing `MOTHERDUCK_TOKEN` secret is used only while the runner queries the validated tables.
+
+If dashboard deployment fails, rerun **Daily Chicago Crimes Pipeline** from the Actions tab after correcting the reported issue. The previously deployed dashboard remains available until a new deployment succeeds.
+
 ## Verification query
 
 ```sql
@@ -57,4 +65,3 @@ LIMIT 5;
 ## Recovery
 
 The transformation transaction rolls back on failure. Fix the underlying issue and manually rerun the workflow. The overlap window allows the corrected run to retrieve recent changes again without creating duplicate crime IDs.
-

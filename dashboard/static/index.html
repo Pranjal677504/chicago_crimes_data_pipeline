@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive Chicago crime analytics across trends, geography, time patterns, and arrest outcomes.">
+  <title>Chicago Crime Analytics</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to dashboard</a>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span>✦</span></div>
+        <div class="brand-copy"><strong>Chicago Crime</strong><span>Analytics Platform</span></div>
+        <button class="icon-button collapse-btn" id="collapseSidebar" aria-label="Collapse sidebar">‹</button>
+      </div>
+      <nav class="primary-nav">
+        <button class="nav-item active" data-view="overview"><span class="nav-icon">⌂</span><span class="nav-label">Overview</span></button>
+        <button class="nav-item" data-view="trends"><span class="nav-icon">↗</span><span class="nav-label">Trends &amp; Time</span></button>
+        <button class="nav-item" data-view="geography"><span class="nav-icon">◎</span><span class="nav-label">Geography</span></button>
+        <button class="nav-item" data-view="enforcement"><span class="nav-icon">✓</span><span class="nav-label">Enforcement</span></button>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="coverage-card">
+        <div class="coverage-label">DATA COVERAGE</div>
+        <strong id="sideCoverage">2020 — 2026</strong>
+        <span id="sideRows">1.57M verified incidents</span>
+        <div class="coverage-bar"><i></i></div>
+        <small>Gold analytics · Silver detail</small>
+      </div>
+      <button class="nav-item data-dictionary" id="openInventory"><span class="nav-icon">▤</span><span class="nav-label">Data &amp; methods</span></button>
+    </aside>
+
+    <main id="main" class="main-content">
+      <header class="topbar">
+        <div class="mobile-brand"><button class="icon-button" id="mobileMenu" aria-label="Open navigation">☰</button><strong>Chicago Crime</strong></div>
+        <div>
+          <div class="eyebrow" id="breadcrumb">ANALYTICS / OVERVIEW</div>
+          <h1 id="pageTitle">Citywide overview</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="freshness"><i></i><div><strong>Data verified</strong><span id="freshnessDate">Loading coverage…</span></div></div>
+          <button class="icon-button" id="themeToggle" aria-label="Toggle color theme">◐</button>
+          <button class="button secondary compact" id="openDetails">View incidents</button>
+        </div>
+      </header>
+
+      <section class="filter-shell" aria-label="Global filters">
+        <div class="filter-heading"><span>Explore the data</span><small>Filters stay active across views</small></div>
+        <div class="filters">
+          <label class="date-range-label">Date range<div class="range-inputs"><input id="dateFrom" type="month" aria-label="Start month"><span>to</span><input id="dateTo" type="month" aria-label="End month"></div></label>
+          <label>Year<select id="yearFilter" aria-label="Filter by year"><option value="all">All years</option></select></label>
+          <label>Crime type<select id="crimeFilter" aria-label="Filter by crime type"><option value="all">All crime types</option></select></label>
+          <label>District<select id="districtFilter" aria-label="Filter by district"><option value="all">All districts</option></select></label>
+          <label>Community area<select id="communityFilter" aria-label="Filter by community area"><option value="all">All communities</option></select></label>
+          <label>Domestic<select id="domesticFilter" aria-label="Filter by domestic status"><option value="all">All incidents</option><option value="1">Domestic</option><option value="0">Non-domestic</option></select></label>
+          <label>Arrest status<select id="arrestFilter" aria-label="Filter by arrest status"><option value="all">Any status</option><option value="1">Arrested</option><option value="0">Not arrested</option></select></label>
+          <button class="button ghost reset-button" id="resetFilters" disabled>Reset</button>
+        </div>
+        <div class="filter-meta"><div id="filterChips" class="filter-chips"></div><span id="filterScope">All verified incidents</span></div>
+      </section>
+
+      <div class="loading-state" id="loadingState"><div class="loader"></div><strong>Preparing verified analytics</strong><span>Reading curated Gold datasets…</span></div>
+
+      <section class="view active" id="view-overview" aria-labelledby="pageTitle">
+        <div class="kpi-grid" id="overviewKpis"></div>
+        <div class="grid main-grid">
+          <article class="panel span-8">
+            <div class="panel-head"><div><span class="section-kicker">VOLUME OVER TIME</span><h2>Monthly reported crime</h2><p>Incident volume by month for the active selection.</p></div><div class="segmented"><button class="active" data-trend-mode="monthly">Monthly</button><button data-trend-mode="rolling">3-mo avg</button></div></div>
+            <div class="chart tall" id="monthlyTrend"></div>
+          </article>
+          <article class="panel span-4">
+            <div class="panel-head"><div><span class="section-kicker">CATEGORY RANKING</span><h2>Top crime categories</h2><p>Share of selected incident volume.</p></div><select class="mini-select" id="topN"><option value="5">Top 5</option><option value="10" selected>Top 10</option><option value="15">Top 15</option></select></div>
+            <div class="bar-list" id="topCategories"></div>
+          </article>
+          <article class="panel span-7">
+            <div class="panel-head"><div><span class="section-kicker">COMPOSITION</span><h2>Crime mix</h2><p>Largest categories and their combined share.</p></div></div>
+            <div class="mix-layout"><div class="donut-wrap"><div class="donut" id="crimeDonut"><div><strong>—</strong><span>incidents</span></div></div></div><div class="legend" id="crimeLegend"></div></div>
+          </article>
+          <article class="panel span-5 insight-panel">
+            <div class="panel-head"><div><span class="section-kicker">SIGNALS</span><h2>Key insights</h2><p>Deterministic findings from the current selection.</p></div></div>
+            <div id="keyInsights" class="insights"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-trends">
+        <div class="grid">
+          <article class="panel span-7"><div class="panel-head"><div><span class="section-kicker">LONG-RUN VIEW</span><h2>Annual crime volume</h2><p>Full years and the current partial year are shown distinctly.</p></div></div><div class="chart medium" id="annualChart"></div></article>
+          <article class="panel span-5"><div class="panel-head"><div><span class="section-kicker">SEASONALITY</span><h2>Monthly profile</h2><p>Average incidents per available month.</p></div></div><div class="chart medium" id="seasonalChart"></div></article>
+          <article class="panel span-12"><div class="panel-head"><div><span class="section-kicker">WEEK × HOUR</span><h2>Crime by hour and day of week</h2><p id="timePatternScope">Hover a cell for the exact incident count.</p></div><div class="heat-legend"><span>Lower</span><i></i><span>Higher</span></div></div><div class="heatmap-wrap" id="timeHeatmap"></div></article>
+          <article class="panel span-6"><div class="panel-head"><div><span class="section-kicker">DAILY RHYTHM</span><h2>Incidents by hour</h2><p id="peakHourText">Peak hour highlighted.</p></div></div><div class="chart medium" id="hourChart"></div></article>
+          <article class="panel span-6"><div class="panel-head"><div><span class="section-kicker">CALENDAR PATTERN</span><h2>Incidents by weekday</h2><p>Monday through Sunday, in calendar order.</p></div></div><div class="chart medium" id="weekdayChart"></div></article>
+          <article class="panel span-12"><div class="panel-head"><div><span class="section-kicker">YEAR-OVER-YEAR</span><h2>Categories changing fastest</h2><p>Valid comparisons only; partial years compare equivalent months.</p></div></div><div class="diverging" id="yoyRanking"></div></article>
+        </div>
+      </section>
+
+      <section class="view" id="view-geography">
+        <div class="grid">
+          <article class="panel map-panel span-8">
+            <div class="panel-head map-head"><div><span class="section-kicker">42,568 AGGREGATED CELLS</span><h2>Chicago crime hotspots</h2><p>Gold-layer coordinate bins; size represents incident volume.</p></div><div class="segmented"><button class="active" data-map-mode="clusters">Clusters</button><button data-map-mode="heat">Heat</button></div></div>
+            <div class="scope-disclosure" id="mapScopeDisclosure">The Gold hotspot table is coordinate-only. Filters update district rankings; the map remains an all-time density view.</div>
+            <div class="map-wrap" id="mapWrap">
+              <canvas id="crimeMap" aria-label="Interactive Chicago crime hotspot map"></canvas>
+              <div class="map-controls"><button id="mapPlus" aria-label="Zoom in">+</button><button id="mapMinus" aria-label="Zoom out">−</button><button id="mapReset" aria-label="Reset map">⌂</button></div>
+              <div class="map-density-legend" id="mapDensityLegend" aria-label="Heat density scale"><span>Lower</span><i></i><span>Higher</span></div>
+              <div class="map-note" id="mapNote">Loading hotspots…</div>
+              <a class="map-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>
+            </div>
+          </article>
+          <article class="panel span-4"><div class="panel-head"><div><span class="section-kicker">DISTRICT VIEW</span><h2>Highest-volume districts</h2><p>Click a district to apply it globally.</p></div><button class="text-button" id="exportDistricts">Export CSV</button></div><div class="bar-list roomy" id="districtRanking"></div></article>
+          <article class="panel span-5"><div class="panel-head"><div><span class="section-kicker">GEOGRAPHIC SUMMARY</span><h2>Coverage &amp; concentration</h2></div></div><div class="geo-stats" id="geoStats"></div></article>
+          <article class="panel span-7"><div class="panel-head"><div><span class="section-kicker">HOTSPOT RANKING</span><h2>Most concentrated cells</h2><p>0.001° coordinate bins from the Gold layer.</p></div></div><div class="table-wrap"><table><thead><tr><th>Rank</th><th>Coordinates</th><th>Incidents</th><th>Arrests</th><th>Arrest rate</th></tr></thead><tbody id="hotspotTable"></tbody></table></div></article>
+        </div>
+      </section>
+
+      <section class="view" id="view-enforcement">
+        <div class="kpi-grid four" id="enforcementKpis"></div>
+        <div class="grid">
+          <article class="panel span-7"><div class="panel-head"><div><span class="section-kicker">RATE BY CATEGORY</span><h2>Arrest rate by crime type</h2><p>Numerator and denominator shown in each tooltip.</p></div><select class="mini-select" id="enforcementSort"><option value="rate">Sort by rate</option><option value="volume">Sort by volume</option><option value="arrests">Sort by arrests</option></select></div><div class="bar-list roomy" id="arrestRateBars"></div></article>
+          <article class="panel span-5"><div class="panel-head"><div><span class="section-kicker">OUTCOME SPLIT</span><h2>Arrested vs not arrested</h2><p>Share of incidents in the active selection.</p></div></div><div class="outcome-block" id="outcomeSplit"></div><div class="domestic-block" id="domesticSplit"></div></article>
+          <article class="panel span-8"><div class="panel-head"><div><span class="section-kicker">SCALE × OUTCOME</span><h2>Crime volume vs arrest rate</h2><p>Each point is one crime category. Hover for detail.</p></div></div><div class="chart scatter" id="enforcementScatter"></div></article>
+          <article class="panel span-4"><div class="panel-head"><div><span class="section-kicker">ARREST VOLUME</span><h2>Most arrests</h2><p>Counts—not rates—ranked highest first.</p></div></div><div class="bar-list roomy" id="topArrests"></div></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="drawer" id="incidentDrawer" aria-label="Incident details" aria-hidden="true">
+    <div class="drawer-head"><div><span class="section-kicker">SILVER-LAYER DRILL-DOWN</span><h2>Recent incident details</h2><p id="incidentScope">Loading verified records…</p></div><button class="icon-button" id="closeDetails" aria-label="Close details">×</button></div>
+    <div class="drawer-tools"><label class="search-box"><span>⌕</span><input id="incidentSearch" type="search" placeholder="Search case, type, description, district…"></label><select id="incidentPageSize"><option value="25">25 rows</option><option value="50">50 rows</option><option value="100">100 rows</option></select><button class="button secondary" id="exportIncidents">Export filtered CSV</button></div>
+    <div class="detail-summary" id="detailSummary"></div>
+    <div class="incident-table-wrap"><table><thead><tr><th data-sort="date">Date</th><th data-sort="case">Case</th><th data-sort="type">Type</th><th>Description</th><th>Location</th><th data-sort="district">District</th><th data-sort="arrest">Arrest</th></tr></thead><tbody id="incidentTable"></tbody></table></div>
+    <div class="pagination"><button id="prevPage">Previous</button><span id="pageInfo">Page 1</span><button id="nextPage">Next</button></div>
+  </aside>
+
+  <aside class="drawer inventory-drawer" id="inventoryDrawer" aria-label="Data and methodology" aria-hidden="true">
+    <div class="drawer-head"><div><span class="section-kicker">TRUST &amp; TRANSPARENCY</span><h2>Data &amp; methodology</h2><p>Metric definitions, pipeline lineage, refresh status, and verified schemas.</p></div><button class="icon-button" id="closeInventory" aria-label="Close data and methodology">×</button></div>
+    <div class="inventory-content">
+      <section class="methodology-grid" id="methodologySummary"></section>
+      <section class="lineage-card"><div><span>Chicago Data Portal</span><small>Source</small></div><b>→</b><div><span>Bronze</span><small>Raw ingestion</small></div><b>→</b><div><span>Silver</span><small>Clean incidents</small></div><b>→</b><div><span>Gold</span><small>Analytics models</small></div><b>→</b><div><span>Dashboard</span><small>Consumption</small></div></section>
+      <section class="method-card"><h3>Metric definitions</h3><dl><div><dt>Reported crimes</dt><dd>Count of applicable incident records.</dd></div><div><dt>Arrest rate</dt><dd>Total arrests ÷ total applicable incidents.</dd></div><div><dt>Hotspot cell</dt><dd>Latitude/longitude grouped to 0.001° bins.</dd></div><div><dt>Year-over-year</dt><dd>Equivalent available months; incomplete years never compare against a full prior year.</dd></div></dl></section>
+      <section class="method-card"><h3>Filter coverage</h3><div class="coverage-table"><div><strong>Overview</strong><span>All filters</span></div><div><strong>Trends</strong><span>All filters except geography on hour/day patterns</span></div><div><strong>Geography</strong><span>All filters on rankings; hotspot map is all-time</span></div><div><strong>Enforcement</strong><span>All filters</span></div></div></section>
+      <h3 class="inventory-title">Verified file inventory</h3>
+      <div id="inventoryContent"></div>
+    </div>
+  </aside>
+
+  <div class="tooltip" id="tooltip" role="tooltip"></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
