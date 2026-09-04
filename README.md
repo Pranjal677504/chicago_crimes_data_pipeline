@@ -1,10 +1,31 @@
-# Chicago Crimes Data Pipeline
+# Chicago Crime Data Pipeline
 
 [![Daily pipeline](https://github.com/Pranjal677504/chicago_crimes_data_pipeline/actions/workflows/daily_pipeline.yml/badge.svg)](https://github.com/Pranjal677504/chicago_crimes_data_pipeline/actions/workflows/daily_pipeline.yml)
 
-[Open the interactive dashboard](https://pranjal677504.github.io/chicago_crimes_data_pipeline/)
+**[Open the live analytics dashboard](https://pranjal677504.github.io/chicago_crimes_data_pipeline/)**
 
-An end-to-end data engineering project that incrementally ingests Chicago crime records, models them in a Bronze–Silver–Gold architecture in MotherDuck, validates every layer with automated quality gates, records operational run history, and publishes an interactive analytics dashboard.
+An end-to-end data engineering project that incrementally ingests Chicago crime records, models them through a Bronze–Silver–Gold architecture in MotherDuck, validates every layer with automated quality gates, records operational history, and publishes a refreshed analytics dashboard.
+
+![Chicago Crime Analytics dashboard overview](docs/assets/dashboard-overview.png)
+
+## At a glance
+
+| Capability | Implementation |
+| --- | --- |
+| Scale | 1.57M+ unique crime records from 2020 onward |
+| Ingestion | Incremental Chicago Data Portal API extraction with watermark overlap |
+| Modeling | Bronze, Silver, and five purpose-built Gold tables |
+| Reliability | Idempotent merge logic, transactional transforms, and automated quality gates |
+| Operations | Run IDs, batch lineage, watermarks, row metrics, and failure history |
+| Delivery | Daily GitHub Actions workflow and aggregate-only GitHub Pages dashboard |
+
+## Engineering highlights
+
+- Captures late source corrections with an overlap window while preserving idempotency.
+- Deduplicates API batches by source ID before merging them into Bronze.
+- Rebuilds Silver and Gold inside a transaction and rolls back on failure.
+- Blocks dashboard publication unless the pipeline and reconciliation checks succeed.
+- Keeps MotherDuck credentials in GitHub Actions secrets and publishes no incident-level rows.
 
 ## Architecture
 
@@ -89,15 +110,22 @@ Every run receives a UUID and batch ID. Success and failure metrics are written 
 
 ## Run locally
 
-1. Create a MotherDuck token.
-2. Copy `.env.example` to `.env` and place the token there.
-3. Install dependencies:
+### Prerequisites
+
+- Python 3.12
+- A MotherDuck database containing the historical `bronze_crimes` baseline table
+- A MotherDuck access token
+
+The historical bootstrap is intentionally separate from the incremental runner. `src/pipeline.py` processes new and corrected source records after `bronze_crimes` has been initialized.
+
+1. Copy `.env.example` to `.env` and add your token.
+2. Install dependencies:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Export the variables from `.env`, then run:
+3. Load the `.env` variables into your shell, then run:
 
    ```bash
    python src/pipeline.py
@@ -105,23 +133,11 @@ Every run receives a UUID and batch ID. Success and failure metrics are written 
 
 Never commit `.env` or a MotherDuck token.
 
-## GitHub Actions setup
+## Automation and deployment
 
-Add `MOTHERDUCK_TOKEN` under **Settings → Secrets and variables → Actions**. `CHICAGO_APP_TOKEN` is optional but recommended for steadier API limits. Run the workflow manually once before relying on the daily schedule.
+The workflow runs daily at `01:30 UTC` (`07:00 IST`) and can also be started manually. It loads incremental API changes, rebuilds the analytical layers, executes the quality gates, generates aggregate dashboard data, and deploys to GitHub Pages.
 
-The schedule is `01:30 UTC`, equivalent to `07:00 IST`. Scheduled GitHub Actions may start a few minutes late during periods of high demand.
-
-## Automated dashboard
-
-After the incremental load and all quality gates pass, the same workflow builds a static dashboard directly from the validated MotherDuck tables and deploys it to GitHub Pages. A failed pipeline or reconciliation check prevents publication, so the live dashboard remains on the last verified version. The public artifact contains aggregate analytics only; no incident-level rows are published.
-
-Enable **Settings → Pages → Build and deployment → GitHub Actions** once for the repository. No data files are committed: the workflow creates an ephemeral Pages artifact, which avoids repository bloat while keeping `MOTHERDUCK_TOKEN` in Actions secrets.
-
-To validate the dashboard build locally with the project Parquet exports:
-
-```bash
-python src/build_dashboard.py --parquet-dir /path/to/parquet/files --output /tmp/chicago-dashboard/data
-```
+Generated JSON is packaged as an ephemeral Pages artifact rather than committed to repository history. If any pipeline or reconciliation check fails, deployment stops and the last verified dashboard remains online. Setup and recovery procedures are documented in the [operations guide](docs/operations.md).
 
 ## Quality controls
 
