@@ -27,7 +27,7 @@ The workflow uses `30 1 * * *`, which means 01:30 UTC or 07:00 IST. GitHub may s
 
 ## Dashboard publication
 
-The daily workflow publishes the dashboard only after the incremental pipeline and Gold quality checks succeed. The dashboard builder performs an additional reconciliation between Silver, monthly Gold, and area Gold totals before creating the deployment artifact.
+The daily workflow publishes the dashboard only after the incremental pipeline and Gold quality checks succeed. The dashboard builder performs an additional reconciliation between Silver, monthly Gold, and area Gold totals before creating the deployment artifact. The artifact contains aggregate analytics only and does not publish incident-level rows.
 
 One-time setup: in **Settings → Pages**, choose **GitHub Actions** as the build and deployment source. The workflow uses the repository's `GITHUB_TOKEN`; no additional deployment secret is required. The existing `MOTHERDUCK_TOKEN` secret is used only while the runner queries the validated tables.
 

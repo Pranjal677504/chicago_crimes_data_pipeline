@@ -30,7 +30,7 @@
         <div class="coverage-bar"><i></i></div>
         <small>Gold analytics · Silver detail</small>
       </div>
-      <button class="nav-item data-dictionary" id="openInventory"><span class="nav-icon">▤</span><span class="nav-label">Data &amp; methods</span></button>
+      <button class="nav-item data-dictionary" data-open-inventory><span class="nav-icon">▤</span><span class="nav-label">Data &amp; methods</span></button>
     </aside>
 
     <main id="main" class="main-content">
@@ -43,7 +43,7 @@
         <div class="topbar-actions">
           <div class="freshness"><i></i><div><strong>Data verified</strong><span id="freshnessDate">Loading coverage…</span></div></div>
           <button class="icon-button" id="themeToggle" aria-label="Toggle color theme">◐</button>
-          <button class="button secondary compact" id="openDetails">View incidents</button>
+          <button class="button secondary compact" data-open-inventory>Data &amp; methodology</button>
         </div>
       </header>
 
@@ -129,14 +129,6 @@
   </div>
 
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
-  <aside class="drawer" id="incidentDrawer" aria-label="Incident details" aria-hidden="true">
-    <div class="drawer-head"><div><span class="section-kicker">SILVER-LAYER DRILL-DOWN</span><h2>Recent incident details</h2><p id="incidentScope">Loading verified records…</p></div><button class="icon-button" id="closeDetails" aria-label="Close details">×</button></div>
-    <div class="drawer-tools"><label class="search-box"><span>⌕</span><input id="incidentSearch" type="search" placeholder="Search case, type, description, district…"></label><select id="incidentPageSize"><option value="25">25 rows</option><option value="50">50 rows</option><option value="100">100 rows</option></select><button class="button secondary" id="exportIncidents">Export filtered CSV</button></div>
-    <div class="detail-summary" id="detailSummary"></div>
-    <div class="incident-table-wrap"><table><thead><tr><th data-sort="date">Date</th><th data-sort="case">Case</th><th data-sort="type">Type</th><th>Description</th><th>Location</th><th data-sort="district">District</th><th data-sort="arrest">Arrest</th></tr></thead><tbody id="incidentTable"></tbody></table></div>
-    <div class="pagination"><button id="prevPage">Previous</button><span id="pageInfo">Page 1</span><button id="nextPage">Next</button></div>
-  </aside>
-
   <aside class="drawer inventory-drawer" id="inventoryDrawer" aria-label="Data and methodology" aria-hidden="true">
     <div class="drawer-head"><div><span class="section-kicker">TRUST &amp; TRANSPARENCY</span><h2>Data &amp; methodology</h2><p>Metric definitions, pipeline lineage, refresh status, and verified schemas.</p></div><button class="icon-button" id="closeInventory" aria-label="Close data and methodology">×</button></div>
     <div class="inventory-content">

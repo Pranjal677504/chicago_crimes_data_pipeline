@@ -12,7 +12,7 @@
   const state = {
     view: 'overview', year: 'all', crime: 'all', district: 'all', community: 'all', domestic: 'all', arrest: 'all',
     from: '', to: '', minPeriod: '', maxPeriod: '',
-    trendMode: 'monthly', mapMode: 'clusters', incidentPage: 1, incidentPageSize: 25, incidentSearch: '', incidentSort: ['date', 'desc']
+    trendMode: 'monthly', mapMode: 'clusters'
   };
   const data = {};
   let map = { center: [41.84, -87.68], zoom: 10, dragging: false, last: null, rendered: [], cache: new Map() };
@@ -104,19 +104,19 @@
           state.from = `${state.year}-01`; state.to = `${state.year}-12` > state.maxPeriod ? state.maxPeriod : `${state.year}-12`;
           $('#dateFrom').value = state.from; $('#dateTo').value = state.to;
         }
-        state.incidentPage = 1; updateUrl(); updateAll();
+        updateUrl(); updateAll();
       });
     });
     const setRange = (key, value) => {
       state[key] = value;
       if (state.from > state.to) { if (key === 'from') state.to = state.from; else state.from = state.to; $('#dateFrom').value = state.from; $('#dateTo').value = state.to; }
-      state.year = 'all'; $('#yearFilter').value = 'all'; state.incidentPage = 1; updateUrl(); updateAll();
+      state.year = 'all'; $('#yearFilter').value = 'all'; updateUrl(); updateAll();
     };
     $('#dateFrom').addEventListener('change', e => setRange('from', e.target.value)); $('#dateTo').addEventListener('change', e => setRange('to', e.target.value));
     $('#resetFilters').addEventListener('click', () => {
       Object.keys(controls).forEach(key => { state[key] = 'all'; $(controls[key]).value = 'all'; });
       state.from = state.minPeriod; state.to = state.maxPeriod; $('#dateFrom').value = state.from; $('#dateTo').value = state.to;
-      state.incidentPage = 1; updateUrl(); updateAll(); showToast('Filters reset');
+      updateUrl(); updateAll(); showToast('Filters reset');
     });
   }
 
@@ -138,7 +138,7 @@
   function clearFilter(key) {
     if (key === 'period') { state.from = state.minPeriod; state.to = state.maxPeriod; $('#dateFrom').value = state.from; $('#dateTo').value = state.to; }
     else { state[key] = 'all'; $(`#${key}Filter`).value = 'all'; }
-    state.incidentPage = 1; updateUrl(); updateAll();
+    updateUrl(); updateAll();
   }
 
   function kpi(label, value, note, tone = '') { return `<article class="kpi-card" ${tone ? `data-tone="${tone}"` : ''}><div class="kpi-label">${esc(label)}</div><strong class="kpi-value">${esc(value)}</strong><div class="kpi-note">${note}</div></article>`; }
@@ -292,7 +292,7 @@
     $('#yoyRanking').innerHTML = changes.map(([name, ch]) => `<div class="div-row"><span class="bar-label" title="${esc(name)}">${esc(name)}</span><div class="div-track"><i class="div-fill ${ch >= 0 ? 'positive' : 'negative'}" style="width:${Math.abs(ch) / cap * 50}%"></i></div><strong style="color:${ch >= 0 ? 'var(--red)' : 'var(--blue)'}">${ch >= 0 ? '+' : ''}${ch.toFixed(1)}%</strong></div>`).join('');
   }
 
-  function selectFilter(key, value) { state[key] = value; $(`#${key}Filter`).value = value; state.incidentPage = 1; updateUrl(); updateAll(); showToast(`${key === 'crime' ? 'Crime type' : key} filter applied`); }
+  function selectFilter(key, value) { state[key] = value; $(`#${key}Filter`).value = value; updateUrl(); updateAll(); showToast(`${key === 'crime' ? 'Crime type' : key} filter applied`); }
 
   function renderGeography() {
     const rows = currentRows(); const byDistrict = group(rows, r => r[2], 6, 7); const ranked = [...byDistrict].map(([name, vals]) => [name, metric(...vals)]).sort((a, b) => b[1] - a[1]); const max = ranked[0]?.[1] || 1;
@@ -405,20 +405,6 @@
     $$('.scatter-dot', el).forEach(n => { const r = rows[+n.dataset.i]; n.addEventListener('mousemove', e => showTip(e, r.name, [`<em>${r.rate.toFixed(1)}%</em> arrest rate`, `${number(r.arrests)} arrests / ${number(r.total)} incidents`])); n.addEventListener('mouseleave', hideTip); n.addEventListener('click', () => selectFilter('crime', r.name)); });
   }
 
-  function filteredIncidents() {
-    const q = state.incidentSearch.trim().toLowerCase(); return data.incidents.rows.filter(r =>
-      r[2].slice(0, 7) >= state.from && r[2].slice(0, 7) <= state.to && (state.year === 'all' || r[2].startsWith(state.year)) && (state.crime === 'all' || r[4] === state.crime) && (state.district === 'all' || r[9] === state.district) && (state.community === 'all' || r[11] === state.community) && (state.domestic === 'all' || Number(r[8]) === +state.domestic) && (state.arrest === 'all' || Number(r[7]) === +state.arrest) && (!q || [r[0], r[1], r[3], r[4], r[5], r[6], r[9], r[11]].some(v => String(v ?? '').toLowerCase().includes(q)))
-    );
-  }
-
-  function renderIncidents() {
-    if (!data.incidents) return; let rows = filteredIncidents(); const mapIndex = { date: 2, case: 1, type: 4, district: 9, arrest: 7 }; const [key, dir] = state.incidentSort; const idx = mapIndex[key]; rows.sort((a, b) => String(a[idx] ?? '').localeCompare(String(b[idx] ?? '')) * (dir === 'asc' ? 1 : -1));
-    const pages = Math.max(1, Math.ceil(rows.length / state.incidentPageSize)); state.incidentPage = Math.min(state.incidentPage, pages); const start = (state.incidentPage - 1) * state.incidentPageSize; const page = rows.slice(start, start + state.incidentPageSize);
-    $('#incidentTable').innerHTML = page.map(r => `<tr><td>${esc(r[2])}</td><td><strong>${esc(r[1])}</strong></td><td>${esc(r[4])}</td><td title="${esc(r[5])}">${esc(r[5])}</td><td>${esc(r[6])}</td><td>${esc(r[9])}</td><td><span class="status-pill ${r[7] ? 'yes' : 'no'}">${r[7] ? 'Arrested' : 'No arrest'}</span></td></tr>`).join('');
-    $('#detailSummary').textContent = `${number(rows.length)} matching records within the controlled recent-incident sample`;
-    $('#pageInfo').textContent = `Page ${state.incidentPage} of ${pages}`; $('#prevPage').disabled = state.incidentPage <= 1; $('#nextPage').disabled = state.incidentPage >= pages;
-  }
-
   function renderInventory() {
     const latestYear = Math.max(...data.core.years); const completeThrough = periodLabel(state.maxPeriod);
     $('#methodologySummary').innerHTML = [
@@ -434,7 +420,7 @@
   }
 
   function updateAll() {
-    updateFilterMeta(); renderOverview(); renderTrends(); renderGeography(); renderEnforcement(); renderIncidents();
+    updateFilterMeta(); renderOverview(); renderTrends(); renderGeography(); renderEnforcement();
   }
 
   function switchView(view) {
@@ -451,14 +437,10 @@
     $$('[data-trend-mode]').forEach(b => b.onclick = () => { state.trendMode = b.dataset.trendMode; $$('[data-trend-mode]').forEach(x => x.classList.toggle('active', x === b)); renderOverview(); });
     $$('[data-map-mode]').forEach(b => b.onclick = () => { state.mapMode = b.dataset.mapMode; $$('[data-map-mode]').forEach(x => x.classList.toggle('active', x === b)); renderMap(); });
     $('#topN').onchange = renderOverview; $('#enforcementSort').onchange = renderEnforcement;
-    $('#openDetails').onclick = () => drawer('#incidentDrawer', true); $('#closeDetails').onclick = () => drawer('#incidentDrawer', false); $('#openInventory').onclick = () => drawer('#inventoryDrawer', true); $('#closeInventory').onclick = () => drawer('#inventoryDrawer', false); $('#drawerBackdrop').onclick = () => { drawer('#incidentDrawer', false); drawer('#inventoryDrawer', false); };
-    $('#incidentSearch').addEventListener('input', e => { clearTimeout(bindUi.search); bindUi.search = setTimeout(() => { state.incidentSearch = e.target.value; state.incidentPage = 1; renderIncidents(); }, 220); });
-    $('#incidentPageSize').onchange = e => { state.incidentPageSize = +e.target.value; state.incidentPage = 1; renderIncidents(); }; $('#prevPage').onclick = () => { state.incidentPage--; renderIncidents(); }; $('#nextPage').onclick = () => { state.incidentPage++; renderIncidents(); };
-    $$('#incidentDrawer th[data-sort]').forEach(th => th.onclick = () => { const key = th.dataset.sort; state.incidentSort = [key, state.incidentSort[0] === key && state.incidentSort[1] === 'desc' ? 'asc' : 'desc']; renderIncidents(); });
-    $('#exportIncidents').onclick = () => { const rows = filteredIncidents(); csvDownload('chicago-crime-incidents-filtered.csv', data.incidents.columns, rows); };
+    $$('[data-open-inventory]').forEach(button => button.onclick = () => drawer('#inventoryDrawer', true)); $('#closeInventory').onclick = () => drawer('#inventoryDrawer', false); $('#drawerBackdrop').onclick = () => drawer('#inventoryDrawer', false);
     $('#exportDistricts').onclick = () => { const g = group(currentRows(), r => r[2], 6, 7); csvDownload('chicago-crime-district-summary.csv', ['district', 'incidents', 'arrests', 'arrest_rate'], [...g].map(([d, v]) => [d, metric(...v), v[1], percent(v[1], v[0])]).sort((a, b) => b[1] - a[1])); };
     addEventListener('resize', () => { clearTimeout(bindUi.resize); bindUi.resize = setTimeout(() => { renderOverview(); renderTrends(); renderEnforcement(); if (state.view === 'geography') renderMap(); }, 180); });
-    addEventListener('keydown', e => { if (e.key === 'Escape') { drawer('#incidentDrawer', false); drawer('#inventoryDrawer', false); hideTip(); } });
+    addEventListener('keydown', e => { if (e.key === 'Escape') { drawer('#inventoryDrawer', false); hideTip(); } });
   }
 
   async function loadJson(name) { const r = await fetch(`data/${name}.json`); if (!r.ok) throw new Error(`${name} could not be loaded`); return r.json(); }
@@ -466,13 +448,13 @@
   async function init() {
     try {
       applyUrlState(); if (localStorage.getItem('cca-theme') === 'dark') document.documentElement.dataset.theme = 'dark';
-      const [core, geoCube, monthlyGeo, timeCube, hotspots, incidents, inventory] = await Promise.all(['core', 'geo_cube', 'monthly_geo', 'time_cube', 'hotspots', 'incidents', 'inventory'].map(loadJson));
-      Object.assign(data, { core, geoCube, monthlyGeo, timeCube, hotspots, incidents, inventory });
+      const [core, geoCube, monthlyGeo, timeCube, hotspots, inventory] = await Promise.all(['core', 'geo_cube', 'monthly_geo', 'time_cube', 'hotspots', 'inventory'].map(loadJson));
+      Object.assign(data, { core, geoCube, monthlyGeo, timeCube, hotspots, inventory });
       state.minPeriod = core.meta.minDate.slice(0, 7); state.maxPeriod = core.meta.maxDate.slice(0, 7); state.from = state.from || state.minPeriod; state.to = state.to || state.maxPeriod;
       if (state.from < state.minPeriod) state.from = state.minPeriod; if (state.to > state.maxPeriod) state.to = state.maxPeriod; if (state.from > state.to) { state.from = state.minPeriod; state.to = state.maxPeriod; }
       const coverageDate = new Date(`${core.meta.maxDate.slice(0, 10)}T00:00:00`);
       $('#freshnessDate').textContent = `Coverage through ${coverageDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
-      $('#sideCoverage').textContent = `${core.years[0]} — ${core.years.at(-1)}`; $('#sideRows').textContent = `${short(core.meta.rowCount)} verified incidents`; $('#incidentScope').textContent = `${incidents.scope}; full Silver table contains ${number(core.meta.rowCount)} rows.`;
+      $('#sideCoverage').textContent = `${core.years[0]} — ${core.years.at(-1)}`; $('#sideRows').textContent = `${short(core.meta.rowCount)} verified incidents`;
       initFilters(); bindUi(); initMapEvents(); renderInventory(); $('#loadingState').classList.add('hidden'); switchView(state.view); updateAll();
     } catch (error) {
       console.error(error); $('#loadingState').innerHTML = `<div class="empty"><div><strong>Dashboard data could not be loaded</strong><br><span>${esc(error.message)}</span></div></div>`;

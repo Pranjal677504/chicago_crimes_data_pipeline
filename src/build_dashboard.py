@@ -125,6 +125,7 @@ def validate(connection: duckdb.DuckDBPyConnection) -> None:
 
 def build(connection: duckdb.DuckDBPyConnection, output: Path, source: str) -> None:
     output.mkdir(parents=True, exist_ok=True)
+    (output / "incidents.json").unlink(missing_ok=True)
     validate(connection)
 
     silver_meta = connection.execute(
@@ -308,34 +309,6 @@ def build(connection: duckdb.DuckDBPyConnection, output: Path, source: str) -> N
                 ORDER BY year, month, primary_type, domestic, day, hour
                 """,
             ),
-        },
-    )
-
-    write(
-        output,
-        "incidents.json",
-        {
-            "columns": [
-                "crime_id", "case_number", "date", "block", "primary_type",
-                "description", "location_description", "arrest", "domestic",
-                "district", "ward", "community_area", "beat", "latitude",
-                "longitude",
-            ],
-            "rows": rows(
-                connection,
-                """
-                SELECT crime_id, case_number, strftime(date, '%Y-%m-%d %H:%M'),
-                       block, primary_type, description, location_description,
-                       arrest, domestic,
-                       CASE WHEN district = '031' THEN 'UNASSIGNED' ELSE district END,
-                       ward, community_area, beat,
-                       round(latitude, 5), round(longitude, 5)
-                FROM silver
-                ORDER BY date DESC, crime_id DESC
-                LIMIT 2500
-                """,
-            ),
-            "scope": "Latest 2,500 incidents by occurrence date",
         },
     )
 
