@@ -7,8 +7,9 @@ on:
       - main
     paths:
       - ".github/workflows/daily_pipeline.yml"
+      - "requirements.txt"
+      - "src/**"
       - "dashboard/**"
-      - "src/build_dashboard.py"
   schedule:
     # 01:30 UTC = 07:00 IST
     - cron: "30 1 * * *"
